@@ -5,12 +5,13 @@ from datetime import datetime, timezone
 
 from .configuration import get_meal_repository
 from .views.error_view import ErrorModel
+from .views.meals_view import MealModel
 
 api = Namespace("insertion",
                 description="data reception service")
 
 error_model = ErrorModel(api)
-# meal_model = 
+meal_model = MealModel(api)
 
 meal_form = api.model("meal_form", {
     "date": fields.String(required = True),
@@ -80,5 +81,16 @@ class StressList(Resource):
 
         return ("Meal stored", 201)
 
+    @api.doc('return last meal inserted')
+    @api.response(200, 'Meal', model=meal_form)
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    @api.response(404, 'Not Found', model=error_model.error_view)
+    def get(self):
+        logging.info("Requested last meal")
+        try:
+            return(meal_model.represent_meal(get_meal_repository().get_last_meal()), 200)
+        except KeyError as err:
+            return(error_model.represent_error(str(err)), 404)
+    
 class InvalidFormError(Exception):
     pass

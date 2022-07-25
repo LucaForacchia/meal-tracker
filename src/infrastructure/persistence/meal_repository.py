@@ -3,6 +3,9 @@ import sqlite3
 from mysql.connector.errors import IntegrityError as MySqlIntegrityError
 import logging
 from uuid import uuid4
+from datetime import datetime
+
+from domain.meal import Meal
 
 class MealRepository:
     def __init__(self, db, db_type="sqlite"):
@@ -60,6 +63,34 @@ class MealRepository:
         except (sqlite3.IntegrityError, MySqlIntegrityError):
             raise DuplicateMeal("A meal with same date type and participants already exists")
 
+    def get_last_meal(self):
+        c = self.db.cursor()
+        c.execute('''
+            SELECT DISTINCT date FROM meals
+        ''')
 
+        dates = sorted([datetime.fromisoformat(row[0]) for row in c.fetchall()], reverse=True)
+        if len(dates) < 1:
+            raise MealNotFound("Db is empty!")
+
+        date = dates[0].isoformat().split("T")[0]
+
+        c.execute(self.__mysql_query_adapter__('''
+            SELECT 
+                date,
+                type,
+                participants,
+                meal,
+                notes 
+            FROM meals
+            WHERE date = ? LIMIT 1
+        '''), [date])
+
+        row = c.fetchone()
+        return Meal(row[0], row[1], row[2], row[3], row[4])
+        
 class DuplicateMeal(Exception):
+    pass
+
+class MealNotFound(KeyError):
     pass
