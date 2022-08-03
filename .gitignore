@@ -1,6 +1,7 @@
 db
 db.*
 ignores
+script-update-db.py
 
 .pymon
 

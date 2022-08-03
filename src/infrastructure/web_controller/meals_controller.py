@@ -13,15 +13,6 @@ api = Namespace("insertion",
 error_model = ErrorModel(api)
 meal_model = MealModel(api)
 
-meal_form = api.model("meal_form", {
-    "date": fields.String(required = True),
-    "start_week": fields.Boolean(required = True),
-    "meal_type": fields.String(required = True),
-    "participants": fields.String(required = True),
-    "meal": fields.String(required = True),
-    "notes": fields.String(required = True)
-})
-
 def validate_input_datetime(arg_name, req_args, default = None):
     if arg_name in req_args:
         try:
@@ -46,7 +37,7 @@ def validate_meal_form(form):
     try:
         # Meal should become a domain object
         meal = {
-            "date": datetime.fromisoformat(form["date"]).date(),
+            "date": datetime.fromisoformat(form["date"]),
             "start_week": bool(form["start_week"]),
             "meal_type": form["meal_type"],
             "participants": form["participants"],
@@ -59,11 +50,11 @@ def validate_meal_form(form):
     return meal
 
 @api.route('/')
-class StressList(Resource):
+class SingleMeal(Resource):
     @api.doc('receive a session notification, compute chunks and store them into table')
     @api.response(201, 'Meal inserted')
     @api.response(400, 'Bad Request', model=error_model.error_view)
-    @api.expect(meal_form)
+    @api.expect(meal_model.meal_form)
     def post(self):
         logging.info("meal received")        
         form = request.get_json()
@@ -74,15 +65,22 @@ class StressList(Resource):
             return (error_model.represent_error(str(err)), 400)
 
         logging.info("Meal received, store")
+        
+        offset = 12*60*60 if meal["meal_type"] == "Pranzo" else 20*60*60
+        meal["timestamp"] = meal["date"].timestamp() + offset
+        
+        # THIS SHOULD BE RETRIEVED IN COMPLEX WAYS FROM DB
+        meal["meal_id"] = meal["meal"]
 
+        meal["date"] = meal["date"].date().isoformat()
         repository = get_meal_repository()
 
-        repository.insert_meal(meal["date"].isoformat(), meal["start_week"], meal["meal_type"], meal["participants"], meal["meal"], meal["notes"])
+        repository.insert_meal(meal)
 
         return ("Meal stored", 201)
 
     @api.doc('return last meal inserted')
-    @api.response(200, 'Meal', model=meal_form)
+    @api.response(200, 'Meal', model=meal_model.meal_model)
     @api.response(400, 'Bad Request', model=error_model.error_view)
     @api.response(404, 'Not Found', model=error_model.error_view)
     def get(self):
@@ -91,6 +89,19 @@ class StressList(Resource):
             return(meal_model.represent_meal(get_meal_repository().get_last_meal()), 200)
         except KeyError as err:
             return(error_model.represent_error(str(err)), 404)
-    
+
+@api.route('/week')
+class WeeklyMealList(Resource):
+    @api.doc('return weekly meal list')
+    @api.response(200, 'Meal', model=meal_model.meal_list)
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    @api.response(404, 'Not Found', model=error_model.error_view)
+    def get(self):
+        logging.info("Requested week meals")
+        week_number = int(request.args["week-number"]) if "week-number" in request.args else None
+
+        week_number, meals_list = get_meal_repository().get_weekly_meals(week_number)
+        return meal_model.represent_meal_list(week_number, meals_list)
+
 class InvalidFormError(Exception):
     pass
