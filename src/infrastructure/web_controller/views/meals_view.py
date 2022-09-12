@@ -27,6 +27,10 @@ class MealModel:
             "notes": fields.String(required = True)
         })
 
+        self.meal_counts = api.model("meal_counts",
+        {
+            "list": fields.List(fields.Integer, required = True)
+        })
 
     def represent_meal(self, meal):
         return {
@@ -42,4 +46,7 @@ class MealModel:
             "week_number": week_number,
             "total": len(meal_list),
             "meals": [self.represent_meal(meal) for meal in meal_list]
-        }
+        }   
+    
+    def represent_meal_count(self, count_list):
+        return [{row[0]: row[1]} for row in count_list if len(row[0]) > 1]

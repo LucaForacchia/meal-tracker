@@ -2,6 +2,7 @@ from flask import g
 import os
 
 from infrastructure.persistence.meal_repository import MealRepository
+from infrastructure.services.meal_service import MealService
 
 import mysql.connector as mysql_conn
 import sqlite3
@@ -63,3 +64,17 @@ def get_meal_repository():
         g._meal_repository = repository
 
     return repository
+
+def get_meal_service():
+    service = getattr(g, "_meal_service", None)
+
+    if service is None:
+        config = get_config()
+
+        db = db_connect(config, config["db_type"])
+
+        service = MealService(db, config)
+
+        g._meal_service = service
+    
+    return service

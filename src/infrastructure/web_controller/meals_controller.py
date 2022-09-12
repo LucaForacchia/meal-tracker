@@ -3,7 +3,7 @@ from flask import request
 from flask_restx import Namespace, Resource, fields
 from datetime import datetime, timezone
 
-from .configuration import get_meal_repository
+from .configuration import get_meal_repository, get_meal_service
 from .views.error_view import ErrorModel
 from .views.meals_view import MealModel
 
@@ -66,16 +66,9 @@ class SingleMeal(Resource):
 
         logging.info("Meal received, store")
         
-        offset = 12*60*60 if meal["meal_type"] == "Pranzo" else 20*60*60
-        meal["timestamp"] = meal["date"].timestamp() + offset
-        
-        # THIS SHOULD BE RETRIEVED IN COMPLEX WAYS FROM DB
-        meal["meal_id"] = meal["meal"]
+        meal = get_meal_service().store_meal(meal)
 
-        meal["date"] = meal["date"].date().isoformat()
-        repository = get_meal_repository()
-
-        repository.insert_meal(meal)
+        get_meal_repository().insert_meal(meal)
 
         return ("Meal stored", 201)
 
@@ -90,6 +83,17 @@ class SingleMeal(Resource):
         except KeyError as err:
             return(error_model.represent_error(str(err)), 404)
 
+@api.route('/meal/<meal-id>')
+class SingleMeal(Resource):
+    @api.doc('delete a meal')
+    @api.response(204, 'Meal Deleted')
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    @api.response(404, 'Not Found', model=error_model.error_view)
+    def delete(self):
+        logging.info("Request to delete a meal")
+        ## TO BE IMPLEMENTED
+        return 204
+
 @api.route('/week')
 class WeeklyMealList(Resource):
     @api.doc('return weekly meal list')
@@ -102,6 +106,16 @@ class WeeklyMealList(Resource):
 
         week_number, meals_list = get_meal_repository().get_weekly_meals(week_number)
         return meal_model.represent_meal_list(week_number, meals_list)
+
+@api.route('/counts')
+class MealsCount(Resource):
+    @api.doc('return count of meals')
+    @api.response(200, 'Meal', model=meal_model.meal_counts)
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    def get(self):
+        logging.info("returning meals count")
+        count_list = get_meal_repository().get_meals_count()
+        return meal_model.represent_meal_count(count_list)
 
 class InvalidFormError(Exception):
     pass

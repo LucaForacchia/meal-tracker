@@ -32,7 +32,7 @@ class MealRepository:
                 meal TEXT,
                 meal_id TEXT NOT NULL,
                 notes TEXT,
-                PRIMARY KEY(date, type, participants)
+                PRIMARY KEY(timestamp, participants)
             )
         '''))
 
@@ -48,7 +48,7 @@ class MealRepository:
     def __serialize_row__(self, row):
         return Meal(row[0], row[1], row[2], row[3], row[4])
 
-    def __get_last_week_timestamp__(self):
+    def get_last_week_timestamp(self):
         c = self.db.cursor()
 
         c.execute('''
@@ -83,6 +83,7 @@ class MealRepository:
     def insert_meal(self, meal):
         c = self.db.cursor()
 
+        logging.debug("Inserting meal %s" % (str(meal)))
         try:
             c.execute(self.__mysql_query_adapter__('''
                     INSERT INTO meals (
@@ -133,7 +134,7 @@ class MealRepository:
     def get_weekly_meals(self, week_number = None):
         c = self.db.cursor()
 
-        week_number, timestamps = self.__get_last_week_timestamp__() if week_number is None else self.__get_week_timestamp__(week_number)
+        week_number, timestamps = self.get_last_week_timestamp() if week_number is None else self.__get_week_timestamp__(week_number)
         
         c.execute(self.__mysql_query_adapter__('''
             SELECT 
@@ -148,6 +149,17 @@ class MealRepository:
         '''), (timestamps[0], timestamps[1]))
 
         return week_number, [self.__serialize_row__(row) for row in c.fetchall()]                
+
+    def get_meals_count(self, filter = None):
+        c = self.db.cursor()
+
+        c.execute(self.__mysql_query_adapter__('''
+            SELECT meal, meal_id, count(meal_id) 
+            FROM meals 
+            GROUP by meal_id
+        '''))
+
+        return sorted([(row[0], row[2]) for row in c.fetchall()], key = lambda x: x[1], reverse = True)
 
 class DuplicateMeal(Exception):
     pass
