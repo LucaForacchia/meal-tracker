@@ -3,7 +3,9 @@ from flask import request
 from flask_restx import Namespace, Resource, fields
 from datetime import datetime, timezone
 
-from .configuration import get_meal_repository, get_meal_service
+from domain.meal import Meal
+
+from .configuration import get_meal_service
 from .views.error_view import ErrorModel
 from .views.meals_view import MealModel
 
@@ -36,18 +38,12 @@ def validate_meal_form(form):
 
     try:
         # Meal should become a domain object
-        meal = {
-            "date": datetime.fromisoformat(form["date"]),
-            "start_week": bool(form["start_week"]),
-            "meal_type": form["meal_type"],
-            "participants": form["participants"],
-            "meal": form["meal"],
-            "notes": form["notes"]
-        }
+        form["date"] = datetime.fromisoformat(form["date"])
+        form["start_week"] = bool(form["start_week"])
     except ValueError as err:
         raise InvalidFormError("Invalid value in input form, %s" % str(err))
     
-    return meal
+    return Meal(**form)
 
 @api.route('/')
 class SingleMeal(Resource):
@@ -66,9 +62,7 @@ class SingleMeal(Resource):
 
         logging.info("Meal received, store")
         
-        meal = get_meal_service().store_meal(meal)
-
-        get_meal_repository().insert_meal(meal)
+        get_meal_service().store_meal(meal)
 
         return ("Meal stored", 201)
 
@@ -79,20 +73,20 @@ class SingleMeal(Resource):
     def get(self):
         logging.info("Requested last meal")
         try:
-            return(meal_model.represent_meal(get_meal_repository().get_last_meal()), 200)
+            return(meal_model.represent_meal(get_meal_service().get_last_meal()), 200)
         except KeyError as err:
             return(error_model.represent_error(str(err)), 404)
 
-@api.route('/meal/<meal-id>')
-class SingleMeal(Resource):
-    @api.doc('delete a meal')
-    @api.response(204, 'Meal Deleted')
-    @api.response(400, 'Bad Request', model=error_model.error_view)
-    @api.response(404, 'Not Found', model=error_model.error_view)
-    def delete(self):
-        logging.info("Request to delete a meal")
-        ## TO BE IMPLEMENTED
-        return 204
+# @api.route('/single/<meal-id>')
+# class SingleMeal(Resource):
+#     @api.doc('delete a meal')
+#     @api.response(204, 'Meal Deleted')
+#     @api.response(400, 'Bad Request', model=error_model.error_view)
+#     @api.response(404, 'Not Found', model=error_model.error_view)
+#     def delete(self):
+#         logging.info("Request to delete a meal")
+#         ## TO BE IMPLEMENTED
+#         return 204
 
 @api.route('/week')
 class WeeklyMealList(Resource):
@@ -104,7 +98,7 @@ class WeeklyMealList(Resource):
         logging.info("Requested week meals")
         week_number = int(request.args["week-number"]) if "week-number" in request.args else None
 
-        week_number, meals_list = get_meal_repository().get_weekly_meals(week_number)
+        week_number, meals_list = get_meal_service().get_weekly_meals(week_number)
         return meal_model.represent_meal_list(week_number, meals_list)
 
 @api.route('/counts')
@@ -114,8 +108,8 @@ class MealsCount(Resource):
     @api.response(400, 'Bad Request', model=error_model.error_view)
     def get(self):
         logging.info("returning meals count")
-        count_list = get_meal_repository().get_meals_count()
-        return meal_model.represent_meal_count(count_list)
+        meal_counts = get_meal_service().get_meals_count()
+        return meal_model.represent_meal_count(meal_counts)
 
 class InvalidFormError(Exception):
     pass

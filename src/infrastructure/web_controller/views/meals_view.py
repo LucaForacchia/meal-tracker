@@ -34,7 +34,7 @@ class MealModel:
 
     def represent_meal(self, meal):
         return {
-        "date": meal.date.isoformat(),
+        "date": meal.date,
         "meal_type": meal.meal_type,
         "participants": meal.participants,
         "meal": meal.meal,
@@ -48,5 +48,5 @@ class MealModel:
             "meals": [self.represent_meal(meal) for meal in meal_list]
         }   
     
-    def represent_meal_count(self, count_list):
-        return [{row[0]: row[1]} for row in count_list if len(row[0]) > 1]
+    def represent_meal_count(self, meal_counts):
+        return sorted([(meal_counts[key]["count"], meal_counts[key]["name"]) for key in meal_counts], key = lambda x: x[0], reverse=True)

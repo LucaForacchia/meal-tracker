@@ -53,17 +53,17 @@ def db_connect(config, db_type="sqlite", path="/tmp/database.sqlite"):
 
     return db
 
-def get_meal_repository():
-    repository = getattr(g, "_meal_repository", None)
+# def get_meal_repository():
+#     repository = getattr(g, "_meal_repository", None)
 
-    if repository is None:
-        config = get_config()
-        db_type = config["db_type"]
-        db = db_connect(config, db_type=db_type, path=config["meal_db_path"])
-        repository = MealRepository(db, db_type)
-        g._meal_repository = repository
+#     if repository is None:
+#         config = get_config()
+#         db_type = config["db_type"]
+#         db = db_connect(config, db_type=db_type, path=config["meal_db_path"])
+#         repository = MealRepository(db, db_type)
+#         g._meal_repository = repository
 
-    return repository
+#     return repository
 
 def get_meal_service():
     service = getattr(g, "_meal_service", None)
@@ -71,7 +71,7 @@ def get_meal_service():
     if service is None:
         config = get_config()
 
-        db = db_connect(config, config["db_type"])
+        db = db_connect(config, config["db_type"], path=config["meal_db_path"])
 
         service = MealService(db, config)
 

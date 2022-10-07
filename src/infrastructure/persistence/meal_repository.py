@@ -46,7 +46,7 @@ class MealRepository:
             pass
 
     def __serialize_row__(self, row):
-        return Meal(row[0], row[1], row[2], row[3], row[4])
+        return Meal(datetime.fromisoformat(row[0]), row[1], row[2], row[3], row[4], start_week = bool(row[5]))
 
     def get_last_week_timestamp(self):
         c = self.db.cursor()
@@ -83,7 +83,7 @@ class MealRepository:
     def insert_meal(self, meal):
         c = self.db.cursor()
 
-        logging.debug("Inserting meal %s" % (str(meal)))
+        logging.debug("Inserting meal %s" % (meal.__dict__))
         try:
             c.execute(self.__mysql_query_adapter__('''
                     INSERT INTO meals (
@@ -96,8 +96,8 @@ class MealRepository:
                         meal_id,
                         notes
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    '''), (meal["date"], meal["timestamp"], int(meal["start_week"]), meal["meal_type"], 
-                        meal["participants"], meal["meal"], meal["meal_id"], meal["notes"]))
+                    '''), (meal.date, meal.timestamp, meal.week_number if meal.start_week else 0, meal.meal_type, 
+                        meal.participants, meal.meal, meal.meal_id, meal.notes))
 
             self.db.commit()
 
@@ -122,7 +122,8 @@ class MealRepository:
                 type,
                 participants,
                 meal,
-                notes 
+                notes,
+                start_week
             FROM meals
             WHERE date = ? LIMIT 1
         '''), [date])
@@ -142,7 +143,8 @@ class MealRepository:
                 type,
                 participants,
                 meal,
-                notes 
+                notes,
+                start_week
             FROM meals
             WHERE timestamp >= ? AND timestamp < ?
             ORDER BY timestamp ASC
@@ -150,16 +152,20 @@ class MealRepository:
 
         return week_number, [self.__serialize_row__(row) for row in c.fetchall()]                
 
+    '''
+    ACHTUNG! È TREMENDAMENTE INEFFICIENTE CONTARE TUTTE LE VOLTE, DEVO AVERE UNA TABELLA 
+    CHE CONTIENE QUESTA TRIPLETTA, E UN CONTROLLER PER LAVORARE SULLE ASSOCIAZIONI MEAL-MEALID
+    '''
     def get_meals_count(self, filter = None):
         c = self.db.cursor()
 
         c.execute(self.__mysql_query_adapter__('''
-            SELECT meal, meal_id, count(meal_id) 
+            SELECT meal_id, meal, count(meal_id) 
             FROM meals 
             GROUP by meal_id
         '''))
 
-        return sorted([(row[0], row[2]) for row in c.fetchall()], key = lambda x: x[1], reverse = True)
+        return {row[0]: {"name": row[1], "count": row[2]} for row in c.fetchall() if row[1] != ""}
 
 class DuplicateMeal(Exception):
     pass
