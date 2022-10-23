@@ -30,7 +30,6 @@ def validate_input_datetime(arg_name, req_args, default = None):
     
     return timestamp_start
 
-# This should become a constructor for the meal obkect (see tags in data-collector)
 def validate_meal_form(form):
     # Check the meal form is well-formed, all fields are legal
     if form is None:
@@ -45,6 +44,16 @@ def validate_meal_form(form):
     
     return Meal(**form)
 
+def validate_replacement_form(form):
+    # Check the meal form is well-formed, all fields are legal
+    if form is None:
+        raise InvalidFormError("request sent without form!")
+
+    try:
+        return form["meal_id"], form["replacement"]
+    except ValueError as err:
+        raise InvalidFormError("Invalid value in input form, %s" % str(err))
+    
 @api.route('/')
 class SingleMeal(Resource):
     @api.doc('receive a session notification, compute chunks and store them into table')
@@ -91,7 +100,7 @@ class SingleMeal(Resource):
 @api.route('/week')
 class WeeklyMealList(Resource):
     @api.doc('return weekly meal list')
-    @api.response(200, 'Meal', model=meal_model.meal_list)
+    @api.response(200, 'Meal', model=meal_model.weekly_meals)
     @api.response(400, 'Bad Request', model=error_model.error_view)
     @api.response(404, 'Not Found', model=error_model.error_view)
     def get(self):
@@ -99,7 +108,7 @@ class WeeklyMealList(Resource):
         week_number = int(request.args["week-number"]) if "week-number" in request.args else None
 
         week_number, meals_list = get_meal_service().get_weekly_meals(week_number)
-        return meal_model.represent_meal_list(week_number, meals_list)
+        return meal_model.represent_meal_week(week_number, meals_list)
 
 @api.route('/counts')
 class MealsCount(Resource):
@@ -111,5 +120,35 @@ class MealsCount(Resource):
         meal_counts = get_meal_service().get_meals_count()
         return meal_model.represent_meal_count(meal_counts)
 
+@api.route('/names')
+class MealsNames(Resource):
+    @api.doc('return meals list')
+    @api.response(200, 'Meal List', model=meal_model.meal_list)
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    def get(self):
+        logging.info("returning meal list")
+        meals_list = get_meal_service().get_meal_list()
+        return meal_model.represent_meal_list(meals_list)
+
+@api.route('/replacement')
+class ReplaceMealId(Resource):
+    @api.doc('replace a meal id with another of choice')
+    @api.response(201, 'Replacement stored')
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    # TODO: document
+    def post(self):
+        logging.info("Replacement received")
+        form = request.get_json()
+
+        try:
+            meal_id, replacement = validate_replacement_form(form)
+        except (KeyError, InvalidFormError) as err:
+            return (error_model.represent_error(str(err)), 400)
+
+        logging.info("Insert replacement %s for id %s" % (replacement, meal_id))
+        
+        get_meal_service().insert_aka(meal_id, replacement)
+
+        return ("Meal stored", 201)
 class InvalidFormError(Exception):
     pass

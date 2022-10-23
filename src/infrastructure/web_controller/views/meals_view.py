@@ -11,7 +11,7 @@ class MealModel:
         "notes": fields.String(required = False)
         } )
 
-        self.meal_list = api.model("meal_list",
+        self.weekly_meals = api.model("weekly_meal_list",
         {
             "week_number": fields.Integer(required = True),
             "total": fields.Integer(required = True),
@@ -32,6 +32,11 @@ class MealModel:
             "list": fields.List(fields.Integer, required = True)
         })
 
+        self.meal_list = api.model("meal_list",
+        {
+            "list": fields.List(fields.String, required = True)
+        })
+
     def represent_meal(self, meal):
         return {
         "date": meal.date,
@@ -41,7 +46,7 @@ class MealModel:
         "notes": meal.notes
         }
     
-    def represent_meal_list(self, week_number, meal_list):
+    def represent_meal_week(self, week_number, meal_list):
         return {
             "week_number": week_number,
             "total": len(meal_list),
@@ -50,3 +55,6 @@ class MealModel:
     
     def represent_meal_count(self, meal_counts):
         return sorted([(meal_counts[key]["count"], meal_counts[key]["name"]) for key in meal_counts], key = lambda x: x[0], reverse=True)
+
+    def represent_meal_list(self, meal_list):
+        return {"list": meal_list}

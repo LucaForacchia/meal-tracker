@@ -24,7 +24,7 @@ def test_init_db(database):
 
     # then: the db tables are created
     c = db.cursor()
-    c.execute("SELECT * FROM  meals")
+    c.execute("SELECT * FROM meals")
     # no error has being thrown, careful there are differences with mysql
 
 @pytest.mark.repository
@@ -102,11 +102,18 @@ def test_get_last_meal(repository):
 
 @pytest.mark.repository
 def test_meal_counts(repository):
-    # given: 4 meal inserted into db, 2 of them having same meal_id
+    # given: 4 meal inserted into both dbs, 2 of them having same meal_id
     repository.insert_meal(get_meal())
+    repository.update_meal_counter(get_meal())
+
     repository.insert_meal(get_meal(date_meal=datetime(2022,1,2)))
+    repository.update_meal_counter(get_meal(date_meal=datetime(2022,1,2)))
+
     repository.insert_meal(get_meal(date_meal=datetime(2022,1,3), meal="Another meal"))
+    repository.update_meal_counter(get_meal(date_meal=datetime(2022,1,3), meal="Another meal"))
+
     repository.insert_meal(get_meal(date_meal=datetime(2022,1,4), meal="Third meal"))
+    repository.update_meal_counter(get_meal(date_meal=datetime(2022,1,4), meal="Third meal"))
 
     # when: requiring the count of meals:
     meal_counts = repository.get_meals_count()
@@ -116,6 +123,60 @@ def test_meal_counts(repository):
     assert type(meal_counts) == dict
     assert len(meal_counts) == 3
     assert 'ANOTHERMEAL' in meal_counts
-    assert meal_counts['ANOTHERMEAL'] == ('Another meal', 1)
+    assert meal_counts['ANOTHERMEAL']["name"] == "Another meal"
+    assert meal_counts['ANOTHERMEAL']["count"] == 1
     assert 'TESTMEAL' in meal_counts
-    assert meal_counts['TESTMEAL'] == ('Test meal', 2)
+    assert meal_counts['TESTMEAL'] == {"name": 'Test meal', "count": 2}
+
+@pytest.mark.repository
+def test_meal_names(repository):
+    # given: 4 meal inserted into both dbs, 2 of them having same meal_id
+    repository.insert_meal(get_meal())
+    repository.update_meal_counter(get_meal())
+
+    repository.insert_meal(get_meal(date_meal=datetime(2022,1,2)))
+    repository.update_meal_counter(get_meal(date_meal=datetime(2022,1,2)))
+
+    repository.insert_meal(get_meal(date_meal=datetime(2022,1,3), meal="Another meal"))
+    repository.update_meal_counter(get_meal(date_meal=datetime(2022,1,3), meal="Another meal"))
+
+    repository.insert_meal(get_meal(date_meal=datetime(2022,1,4), meal="Third meal"))
+    repository.update_meal_counter(get_meal(date_meal=datetime(2022,1,4), meal="Third meal"))
+
+    # when: requiring the meals names:
+    meal_names = repository.get_meals_names()
+
+    # then: meal_counts is as expected
+    print(meal_names)
+    assert type(meal_names) == list
+    assert len(meal_names) == 3
+    assert 'Another meal' in meal_names
+    assert 'Test meal' in meal_names
+
+@pytest.mark.repository
+def test_meal_counter_table(repository, database):
+    # given: a valid meal form
+    meal_obj = get_meal()
+
+    # when: inserting it to meal_counter table
+    repository.update_meal_counter(meal_obj)
+
+    # then: an entry is correctly created into the meal_counter table
+    (db, db_type) = database
+
+    c = db.cursor()
+    c.execute("SELECT * FROM meal_counter")
+    meals = c.fetchall()
+    assert len(meals) == 1
+    assert meals[0] == ('TESTMEAL', 'Test meal', 1, 1, 0, 0)
+
+    # when: updating the table with the same meal
+    meal_obj.participants = "Luca"
+    repository.update_meal_counter(meal_obj)
+
+    # then: meal_counter table is correctly updated
+    c = db.cursor()
+    c.execute("SELECT * FROM meal_counter")
+    meals = c.fetchall()
+    assert len(meals) == 1
+    assert meals[0] == ('TESTMEAL', 'Test meal', 2, 1, 1, 0)
