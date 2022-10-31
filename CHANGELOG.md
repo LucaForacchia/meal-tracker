@@ -1,7 +1,8 @@
 ## [0.0.2] - 2022-10-07
 ### Added
-- Group meals with different ids according to "magic table"
-- New db tables meal_counter
+- New db table meal_counter to store meal occurrences
+- Domain object Meal Occurrences
+- Db table aka to store id replacement
 - Logging on file
 
 ### Changed

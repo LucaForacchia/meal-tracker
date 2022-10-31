@@ -1,6 +1,6 @@
 flask
 flask-restx
-werkzeug
+werkzeug==2.1.2
 mysql-connector-python
 
 # test

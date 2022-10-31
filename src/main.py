@@ -20,11 +20,15 @@ def after_request(response):
     return response
     
 # Set logging
+if not os.path.isdir("logs"):
+    os.mkdir("logs")
+
 path_logs = os.path.join("logs", datetime.now().replace(microsecond=0).isoformat()+".log")
 logging.basicConfig(filename=path_logs, 
     encoding='utf-8', 
     level=logging.DEBUG,
     format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S'
     )
+print("Logs on:", path_logs)
 logging.info("Welcome to backend logs :)\nServer configuration: %s" % str(load_config()))
 app.run(debug=False, host="0.0.0.0", port=5001)
