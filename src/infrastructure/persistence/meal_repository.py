@@ -184,6 +184,8 @@ class MealRepository:
         if len(rows) > 2:
             raise Exception("Too many rows selected!!!")
         
+        elif len(rows) == 1:
+            return week_number, (rows[0][0], rows[0][0] + 30 * 24 * 3600)
         return week_number, (rows[1][0], rows[0][0])
 
     def insert_meal(self, meal):

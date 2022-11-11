@@ -53,6 +53,9 @@ class MealService():
 
         self.repository.update_meal_counter_v2(meal_occurrences, replaced = meal_id)
 
+    def get_replacements(self):
+        return self.replacement_repository.get_replacements()
+
     ''' This should become useless'''
     def group_id(self, meals_count):
         # HERE I SHOULD INSERT LOGIC TO GROUP MEAL COUNT

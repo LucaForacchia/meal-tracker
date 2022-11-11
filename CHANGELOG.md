@@ -1,3 +1,12 @@
+## [0.0.3] - 2022-11-10
+## Added
+- Get replacement list 
+- Extended meal service tests
+- _pytest.ini_ file
+
+## Fixed
+- Returning current week also when requested with week number parameter
+
 ## [0.0.2] - 2022-10-07
 ### Added
 - New db table meal_counter to store meal occurrences

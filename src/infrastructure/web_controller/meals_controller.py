@@ -150,5 +150,16 @@ class ReplaceMealId(Resource):
         get_meal_service().insert_aka(meal_id, replacement)
 
         return ("Meal stored", 201)
+
+    @api.doc('get replacements')
+    @api.response(200, 'Replacements') # TODO: add model
+    # TODO: document
+    def get(self):
+        logging.info("Required replacement table")
+        
+        replacement = get_meal_service().get_replacements()
+
+        return (replacement, 201)
+    
 class InvalidFormError(Exception):
     pass
