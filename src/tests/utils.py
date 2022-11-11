@@ -1,3 +1,4 @@
+from datetime import date
 import os
 import shutil
 import pytest
@@ -5,6 +6,9 @@ import sqlite3
 import mysql.connector as mysql_conn
 
 from time import sleep
+from datetime import datetime
+
+from domain.meal import Meal
 
 def get_environ(key, default=None):
     try:
@@ -21,7 +25,10 @@ def mysql_query_adapter(db_type, query):
     if db_type=="mysql":
         return query.replace("?", "%s")
     return query
-    
+
+def get_meal(date_meal=datetime(2022,1,1), meal_type = "Pranzo", participants = "Entrambi", meal = "Test meal", notes = "Nota", start_week = False):
+    return Meal(date_meal, meal_type, participants, meal, notes, start_week)
+
 @pytest.fixture
 def database():
     db_type = get_environ("db_type", default="sqlite")

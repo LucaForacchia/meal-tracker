@@ -1,6 +1,6 @@
 # MealTracker Backend
 
-version 0.0.1
+version 0.0.3
 
 # How to use
 

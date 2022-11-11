@@ -1,7 +1,9 @@
 db
 db.*
 ignores
-script-update-db.py
+script*
+scripts*
+docker*
 
 .pymon
 

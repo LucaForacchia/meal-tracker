@@ -13,7 +13,7 @@ class VersionModel:
         self.software_status = {
             "name": "Meal Tracker",
             "description": "This service stores the meals for the Foracchia-Manini family",
-            "version": "0.0.1",
+            "version": "0.0.3",
             "status": "In development - Sprint 1 undergoing"
         }
 

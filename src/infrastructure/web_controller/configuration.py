@@ -2,6 +2,7 @@ from flask import g
 import os
 
 from infrastructure.persistence.meal_repository import MealRepository
+from infrastructure.services.meal_service import MealService
 
 import mysql.connector as mysql_conn
 import sqlite3
@@ -52,14 +53,28 @@ def db_connect(config, db_type="sqlite", path="/tmp/database.sqlite"):
 
     return db
 
-def get_meal_repository():
-    repository = getattr(g, "_meal_repository", None)
+# def get_meal_repository():
+#     repository = getattr(g, "_meal_repository", None)
 
-    if repository is None:
+#     if repository is None:
+#         config = get_config()
+#         db_type = config["db_type"]
+#         db = db_connect(config, db_type=db_type, path=config["meal_db_path"])
+#         repository = MealRepository(db, db_type)
+#         g._meal_repository = repository
+
+#     return repository
+
+def get_meal_service():
+    service = getattr(g, "_meal_service", None)
+
+    if service is None:
         config = get_config()
-        db_type = config["db_type"]
-        db = db_connect(config, db_type=db_type, path=config["meal_db_path"])
-        repository = MealRepository(db, db_type)
-        g._meal_repository = repository
 
-    return repository
+        db = db_connect(config, config["db_type"], path=config["meal_db_path"])
+
+        service = MealService(db, config)
+
+        g._meal_service = service
+    
+    return service

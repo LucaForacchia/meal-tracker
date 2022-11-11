@@ -1,8 +1,10 @@
-FROM python:3.7-slim
+FROM python:3.10-slim
 
 COPY ./requirements.txt /meal-tracker/requirements.txt
 
 WORKDIR /meal-tracker
+
+RUN pip3 install --upgrade pip
 
 RUN pip3 install -r requirements.txt
 
