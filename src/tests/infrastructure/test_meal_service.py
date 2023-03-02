@@ -30,7 +30,7 @@ def test_store_meal(service, database):
     c.execute("SELECT * FROM meals")
     meals = c.fetchall()
     assert len(meals) == 1
-    assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Nota')
+    assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', None, 'Nota')
 
 @pytest.mark.service
 def test_store_meal_new_week(service, database):
@@ -55,8 +55,8 @@ def test_store_meal_new_week(service, database):
     meals = c.fetchall()
     print(meals)
     assert len(meals) == 2
-    assert meals[0] == ('2022-01-01', 1641034800, 120, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Nota')
-    assert meals[1] == ('2022-02-15', 1644922800, 121, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Nota')
+    assert meals[0] == ('2022-01-01', 1641034800, 120, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', None, 'Nota')
+    assert meals[1] == ('2022-02-15', 1644922800, 121, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', None, 'Nota')
 
 @pytest.mark.service
 def test_get_weekly_meals(service, database):

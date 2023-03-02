@@ -71,6 +71,8 @@ def get_meal_service():
     if service is None:
         config = get_config()
 
+        print("Creating meal service with config", config)
+        
         db = db_connect(config, config["db_type"], path=config["meal_db_path"])
 
         service = MealService(db, config)

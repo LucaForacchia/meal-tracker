@@ -8,6 +8,7 @@ class MealModel:
         "meal_type": fields.String(required = True),
         "participants": fields.String(required = True),
         "meal": fields.String(required = False),
+        "dessert": fields.String(required = False),
         "notes": fields.String(required = False)
         } )
 
@@ -24,6 +25,7 @@ class MealModel:
             "meal_type": fields.String(required = True),
             "participants": fields.String(required = True),
             "meal": fields.String(required = True),
+            "dessert": fields.String(required = False),
             "notes": fields.String(required = True)
         })
 
@@ -43,6 +45,7 @@ class MealModel:
         "meal_type": meal.meal_type,
         "participants": meal.participants,
         "meal": meal.meal,
+        "dessert": meal.dessert,
         "notes": meal.notes
         }
     

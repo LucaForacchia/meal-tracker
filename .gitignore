@@ -4,6 +4,8 @@ ignores
 script*
 scripts*
 docker*
+deployment*
+logs*
 
 .pymon
 

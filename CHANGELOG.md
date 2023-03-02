@@ -1,3 +1,11 @@
+## [0.1.0] - 2022-12-16
+## Added
+- Dessert handling
+- First acceptance test
+
+## Removed
+- Get last meal
+
 ## [0.0.3] - 2022-11-10
 ## Added
 - Get replacement list 

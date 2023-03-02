@@ -26,22 +26,17 @@ def mysql_query_adapter(db_type, query):
         return query.replace("?", "%s")
     return query
 
-def get_meal(date_meal=datetime(2022,1,1), meal_type = "Pranzo", participants = "Entrambi", meal = "Test meal", notes = "Nota", start_week = False):
-    return Meal(date_meal, meal_type, participants, meal, notes, start_week)
+def get_meal(date_meal=datetime(2022,1,1), meal_type = "Pranzo", participants = "Entrambi", meal = "Test meal", notes = "Nota", start_week = False, dessert=None):
+    return Meal(date_meal, meal_type, participants, meal, notes, start_week, dessert = dessert)
 
 @pytest.fixture
 def database():
     db_type = get_environ("db_type", default="sqlite")
 
     if db_type=="sqlite":
-        path = "/tmp/pytest-db"
+        path = get_environ("meal_db_path", default="/tmp/pytest.db")
         if os.path.exists(path):
-            shutil.rmtree(path)
-
-        print ("Creating test repository path: ", path)
-        os.mkdir(path)
-
-        path += "/mhpy-test-sqlite.db"
+            os.remove(path)
 
         return (sqlite3.connect(path), "sqlite")
 

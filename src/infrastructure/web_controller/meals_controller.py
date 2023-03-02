@@ -75,17 +75,6 @@ class SingleMeal(Resource):
 
         return ("Meal stored", 201)
 
-    @api.doc('return last meal inserted')
-    @api.response(200, 'Meal', model=meal_model.meal_model)
-    @api.response(400, 'Bad Request', model=error_model.error_view)
-    @api.response(404, 'Not Found', model=error_model.error_view)
-    def get(self):
-        logging.info("Requested last meal")
-        try:
-            return(meal_model.represent_meal(get_meal_service().get_last_meal()), 200)
-        except KeyError as err:
-            return(error_model.represent_error(str(err)), 404)
-
 # @api.route('/single/<meal-id>')
 # class SingleMeal(Resource):
 #     @api.doc('delete a meal')
