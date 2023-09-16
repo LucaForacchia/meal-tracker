@@ -20,8 +20,9 @@ class Meal:
     dessert: Optional[str] = None
    
     def __post_init__(self):
-        offset = 12*60*60 if self.meal_type == "Pranzo" else 20*60*60
-        self.timestamp = self.date.timestamp() + offset
+        if self.timestamp == 0:
+            offset = 12*60*60 if self.meal_type == "Pranzo" else 20*60*60
+            self.timestamp = self.date.timestamp() + offset
         self.meal_id = self.build_meal_id()
         self.date = self.date.date().isoformat()
        

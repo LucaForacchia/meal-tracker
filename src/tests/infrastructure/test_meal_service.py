@@ -108,3 +108,38 @@ def test_get_weekly_meals(service, database):
     assert first_meal.date == "2022-02-16"
     assert first_meal.start_week == True
     assert first_meal.week_number is None
+
+@pytest.mark.service
+def test_delete_meal(service, database):
+    # given: a meal service and two valid meals stored in db:
+    meal_obj = get_meal(meal="TestDelete")
+    service.store_meal(meal_obj)
+
+    meal_obj = get_meal(date_meal = datetime(2023,1,1), meal="Test Delete", participants="Luca")
+    service.store_meal(meal_obj)
+
+
+    # when: requiring to delete the meal (only timestamp and participants fields are required)
+    service.delete_meal(get_meal())
+
+    # then: the meal is correctly deleted from db
+    (db, db_type) = database
+
+    c = db.cursor()
+    c.execute("SELECT * FROM meals")
+    meals = c.fetchall()
+    assert len(meals) == 1
+    assert meals[0] == ('2023-01-01', 1672570800, 0, 'Pranzo', 'Luca', 'Test Delete', 'TESTDELETE', None, 'Nota')
+
+    # then: the meal counter is correctly updated
+    c.execute('''SELECT 
+        meal_id,
+        meal,
+        count_total,
+        both,
+        L,
+        G
+        FROM meal_counter''')
+    meals = c.fetchall()
+    assert len(meals) == 1
+    assert meals[0] == ('TESTDELETE', 'TestDelete', 1, 0, 1, 0)

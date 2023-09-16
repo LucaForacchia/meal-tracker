@@ -45,6 +45,23 @@ def test_save_meal(repository, database):
     assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', None, 'Nota')
 
 @pytest.mark.repository
+def test_delete_meal(repository, database):
+    # given: a correctly initialized repository and a valid meal inserted into db:
+    meal_obj = get_meal()
+    repository.insert_meal(meal_obj)
+
+    # when: deleting the new meal from db
+    repository.delete_meal(meal_obj.timestamp, "Entrambi")
+
+    # then: the meal is no more stored into the db
+    (db, db_type) = database
+
+    c = db.cursor()
+    c.execute("SELECT * FROM meals")
+    meals = c.fetchall()
+    assert len(meals) == 0
+
+@pytest.mark.repository
 def test_save_meal_with_dessert(repository, database):
     # given: a correctly initialized repository and a valid meal, including dessert:
     meal_obj = get_meal(dessert="Test dessert")

@@ -41,6 +41,9 @@ def validate_meal_form(form):
         form["start_week"] = bool(form["start_week"])
     except ValueError as err:
         raise InvalidFormError("Invalid value in input form, %s" % str(err))
+
+    if form["meal_type"] not in ["Pranzo", "Cena"]:
+        raise InvalidFormError("Invalid value for meal_type field. Allowed values are Pranzo, Cena")
     
     return Meal(**form)
 
@@ -53,7 +56,23 @@ def validate_replacement_form(form):
         return form["meal_id"], form["replacement"]
     except ValueError as err:
         raise InvalidFormError("Invalid value in input form, %s" % str(err))
-    
+
+def validate_select_form(form):
+    if not(set(form.keys()) ==  set(["date", "meal_type", "participants"])):
+        raise InvalidFormError("Invalid input form. Expected date, meal_type, participants")
+    try:
+        form["date"] = datetime.fromisoformat(form["date"])
+    except ValueError as err:
+        raise InvalidFormError("Invalid value in input form, %s" % str(err))
+
+    if form["meal_type"] not in ["Pranzo", "Cena"]:
+        raise InvalidFormError("Invalid value for meal_type field. Allowed values are Pranzo, Cena")
+
+    if form["participants"] not in ["Luca", "Gioi", "Entrambi"]:
+        raise InvalidFormError("Invalid value for participants field. Allowed values are Luca, Gioi, Entrambi")
+
+    return form
+
 @api.route('/')
 class SingleMeal(Resource):
     @api.doc('receive a session notification, compute chunks and store them into table')
@@ -75,16 +94,29 @@ class SingleMeal(Resource):
 
         return ("Meal stored", 201)
 
-# @api.route('/single/<meal-id>')
-# class SingleMeal(Resource):
-#     @api.doc('delete a meal')
-#     @api.response(204, 'Meal Deleted')
-#     @api.response(400, 'Bad Request', model=error_model.error_view)
-#     @api.response(404, 'Not Found', model=error_model.error_view)
-#     def delete(self):
-#         logging.info("Request to delete a meal")
-#         ## TO BE IMPLEMENTED
-#         return 204
+@api.route('/single')
+class SingleMeal(Resource):
+    @api.doc('delete a meal')
+    @api.response(204, 'Meal Deleted')
+    @api.response(400, 'Bad Request', model=error_model.error_view)
+    @api.response(404, 'Not Found', model=error_model.error_view)
+    @api.expect()
+    def delete(self):
+        logging.info("Request to delete a meal")
+        try:
+            form = validate_select_form(request.get_json())
+        except InvalidFormError as err:
+            return (error_model.represent_error(str(err)), 400)
+
+        get_meal_service().delete_meal(Meal(
+            form["date"], 
+            form["meal_type"], 
+            form["participants"],
+            "ToDelete",
+            ""
+        ))
+
+        return 204
 
 @api.route('/week')
 class WeeklyMealList(Resource):

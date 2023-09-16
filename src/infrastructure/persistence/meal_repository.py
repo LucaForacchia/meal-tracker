@@ -61,63 +61,14 @@ class MealRepository:
             pass
 
     def __serialize_row__(self, row):
-        return Meal(datetime.fromisoformat(row[0]), row[1], row[2], row[3], row[4], start_week = bool(row[5]), dessert=row[6])
-
-    ''' These 2 method needs to be unified to v2'''
-    def update_meal_counter_v2(self, meal_occurrences, replaced = None):
+        return Meal(datetime.fromisoformat(row[0]), row[1], row[2], row[3], row[4], start_week = bool(row[5]), meal_id=row[6], dessert=row[7], timestamp=row[8])
+        
+    def update_meal_counter(self, meal, change = 1):
         c = self.db.cursor()
 
-        c.execute(self.__mysql_query_adapter__('''
-            SELECT 
-                count_total,
-                both,
-                L,
-                G
-            FROM meal_counter where meal_id = ?
-            LIMIT 1
-        '''), [meal_occurrences.meal_id])
-
-        meal_selected = c.fetchone()
-
-        if meal_selected is None:
-            if meal_occurrences.name is None:
-                raise Exception("Name not specified! Unable to insert into meal counter table")
-            c.execute(self.__mysql_query_adapter__('''
-                INSERT INTO meal_counter (
-                    meal_id,
-                    meal,
-                    count_total,
-                    both,
-                    L,
-                    G
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                    '''), (meal_occurrences.meal_id, meal_occurrences.name, meal_occurrences.total, 
-                    meal_occurrences.both, meal_occurrences.l, meal_occurrences.g))
-        else:
-            c.execute(self.__mysql_query_adapter__('''
-                UPDATE meal_counter
-                SET
-                    count_total = ?,
-                    both = ?,
-                    L = ?,
-                    G = ?
-                WHERE meal_id = ?
-            '''), (meal_selected[0] + meal_occurrences.total, meal_selected[1] + meal_occurrences.both, 
-            meal_selected[2] + meal_occurrences.l, meal_selected[3] + meal_occurrences.g, meal_occurrences.meal_id))
-
-        if replaced is not None:
-            c.execute(self.__mysql_query_adapter__('''
-                DELETE FROM meal_counter WHERE meal_id = ?
-            '''), [replaced])
-            
-        self.db.commit()
-
-    def update_meal_counter(self, meal):
-        c = self.db.cursor()
-
-        plus_both = 1 if meal.participants == "Entrambi" else 0 
-        plus_l = 1 if meal.participants == "Luca" else 0
-        plus_g = 1 if meal.participants == "Gioi" else 0
+        plus_both = change if meal.participants == "Entrambi" else 0 
+        plus_l = change if meal.participants == "Luca" else 0
+        plus_g = change if meal.participants == "Gioi" else 0
 
         c.execute(self.__mysql_query_adapter__('''
             SELECT 
@@ -132,16 +83,19 @@ class MealRepository:
         meal_selected = c.fetchone()
 
         if meal_selected is None:
-            c.execute(self.__mysql_query_adapter__('''
-                INSERT INTO meal_counter (
-                    meal_id,
-                    meal,
-                    count_total,
-                    both,
-                    L,
-                    G
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                    '''), (meal.meal_id, meal.meal, 1, plus_both, plus_l, plus_g))
+            if change == 1:
+                c.execute(self.__mysql_query_adapter__('''
+                    INSERT INTO meal_counter (
+                        meal_id,
+                        meal,
+                        count_total,
+                        both,
+                        L,
+                        G
+                        ) VALUES (?, ?, ?, ?, ?, ?)
+                        '''), (meal.meal_id, meal.meal, 1, plus_both, plus_l, plus_g))
+            else:
+                raise ValueError(f"Unable to update values of {change} for a not tracked meal")
         else:
             c.execute(self.__mysql_query_adapter__('''
                 UPDATE meal_counter
@@ -151,7 +105,7 @@ class MealRepository:
                     L = ?,
                     G = ?
                 WHERE meal_id = ?
-            '''), (meal_selected[0] + 1, meal_selected[1] + plus_both, meal_selected[2] + plus_l, meal_selected[3] + plus_g, meal.meal_id))
+            '''), (meal_selected[0] + change, meal_selected[1] + plus_both, meal_selected[2] + plus_l, meal_selected[3] + plus_g, meal.meal_id))
 
         self.db.commit()
 
@@ -202,7 +156,9 @@ class MealRepository:
                 meal,
                 notes,
                 start_week,
-                dessert
+                meal_id,
+                dessert,
+                timestamp
             FROM meals
             '''
 
@@ -231,6 +187,45 @@ class MealRepository:
         except (sqlite3.IntegrityError, MySqlIntegrityError):
             raise DuplicateMeal("A meal with same date type and participants already exists")
     
+    def delete_meal(self, timestamp, participants):
+        c = self.db.cursor()
+
+        logging.debug("Checking meal existence")
+        try:
+            c.execute(self.__mysql_query_adapter__('''
+            SELECT
+                COUNT(*)
+            FROM meals
+            WHERE timestamp = ?
+            AND participants = ?
+            '''), (timestamp, participants))
+
+            n_meals = c.fetchall()[0][0]
+
+            logging.debug("N_meals:", n_meals)
+
+            assert n_meals == 1
+        
+        except AssertionError:
+            raise DuplicateMeal(f"Number of meals with given parameters is {n_meals}, different from 1!")
+        
+        c.execute(self.__mysql_query_adapter__('''
+            DELETE FROM meals
+            WHERE timestamp = ?
+            AND participants = ?
+            '''), (timestamp, participants))
+
+        self.db.commit()
+
+    def get_meal(self, timestamp, participants):
+        c = self.db.cursor()
+        c.execute(self.__mysql_query_adapter__(self.__get_select_query__() + '''
+                WHERE timestamp = ?
+                AND participants = ?
+            '''), (timestamp, participants))
+
+        return [self.__serialize_row__(row) for row in c.fetchall()][0]
+
     def get_weekly_meals(self, week_number = None):
         c = self.db.cursor()
 
@@ -254,6 +249,7 @@ class MealRepository:
         return {row[0]: {"name": row[1], "count": row[2]} for row in c.fetchall() if row[1] != ""}
 
     def get_meal_occurrences(self, meal_id):
+    ## Used for what?
         c = self.db.cursor()
 
         c.execute(self.__mysql_query_adapter__('''

@@ -29,6 +29,12 @@ class MealModel:
             "notes": fields.String(required = True)
         })
 
+        self.meal_select_form = api.model("meal_select_form", {
+            "date": fields.String(required = True),
+            "meal_type": fields.String(required = True),
+            "participants": fields.String(required = True)
+        })
+
         self.meal_counts = api.model("meal_counts",
         {
             "list": fields.List(fields.Integer, required = True)

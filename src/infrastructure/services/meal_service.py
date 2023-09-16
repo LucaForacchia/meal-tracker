@@ -28,6 +28,24 @@ class MealService():
 
             self.repository.update_meal_counter(meal)
 
+    def delete_meal(self, meal):
+        # TODO: test
+        logging.info("Requested to delete meal with timestamp %d and participants %s" % (meal.timestamp, meal.participants))
+        meal_db = self.repository.get_meal(meal.timestamp, meal.participants)
+        
+        logging.info("Selected meal to delete: %s" % (str(meal_db.__dict__)))
+        # CHECK IF MEAL_ID HAS TO BE REPLACED
+        if meal_db.meal_id != "":
+            aka_dict = self.replacement_repository.get_akas_dict()
+            if meal.meal_id in aka_dict:
+                meal.meal_id = aka_dict[meal.meal_id]
+
+        # Downscale counter
+        self.repository.update_meal_counter(meal_db, change = -1)    
+        
+        # If this transaction fails I cannot revert the update counter
+        self.repository.delete_meal(meal_db.timestamp, meal_db.participants)
+
     def get_weekly_meals(self, week_number):
         return self.repository.get_weekly_meals(week_number)
 
