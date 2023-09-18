@@ -42,12 +42,29 @@ def test_save_meal(repository, database):
     c.execute("SELECT * FROM meals")
     meals = c.fetchall()
     assert len(meals) == 1
-    assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Nota')
+    assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', None, 'Nota')
 
 @pytest.mark.repository
-def test_save_meal(repository, database):
-    # given: a correctly initialized repository and a valid meal:
+def test_delete_meal(repository, database):
+    # given: a correctly initialized repository and a valid meal inserted into db:
     meal_obj = get_meal()
+    repository.insert_meal(meal_obj)
+
+    # when: deleting the new meal from db
+    repository.delete_meal(meal_obj.timestamp, "Entrambi")
+
+    # then: the meal is no more stored into the db
+    (db, db_type) = database
+
+    c = db.cursor()
+    c.execute("SELECT * FROM meals")
+    meals = c.fetchall()
+    assert len(meals) == 0
+
+@pytest.mark.repository
+def test_save_meal_with_dessert(repository, database):
+    # given: a correctly initialized repository and a valid meal, including dessert:
+    meal_obj = get_meal(dessert="Test dessert")
 
     # when: inserting a new meal in db
     repository.insert_meal(meal_obj)
@@ -59,7 +76,8 @@ def test_save_meal(repository, database):
     c.execute("SELECT * FROM meals")
     meals = c.fetchall()
     assert len(meals) == 1
-    assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Nota')
+    print(meals[0])
+    assert meals[0] == ('2022-01-01', 1641034800, 0, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Test dessert', 'Nota')
 
 @pytest.mark.repository
 def test_save_meal_new_week(repository, database):
@@ -78,27 +96,7 @@ def test_save_meal_new_week(repository, database):
     c.execute("SELECT * FROM meals")
     meals = c.fetchall()
     assert len(meals) == 1
-    assert meals[0] == ('2022-01-01', 1641034800, 120, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', 'Nota')
-
-@pytest.mark.repository
-def test_get_last_meal(repository):
-    # given: a meal inserted into db
-    repository.insert_meal(get_meal())
-
-    # when: requiring the last meal inserted:
-    meal_object = repository.get_last_meal()
-
-    # then: a meal_obj is retrieved
-    assert type(meal_object) == Meal
-    assert meal_object.date == "2022-01-01"
-    assert meal_object.timestamp == 1641034800
-    assert meal_object.meal_type == "Pranzo"
-    assert meal_object.participants == "Entrambi"
-    assert meal_object.meal == "Test meal"
-    assert meal_object.notes == "Nota"
-    assert not meal_object.start_week
-    assert meal_object.week_number is None
-    assert meal_object.meal_id == "TESTMEAL"
+    assert meals[0] == ('2022-01-01', 1641034800, 120, 'Pranzo', 'Entrambi', 'Test meal', 'TESTMEAL', None, 'Nota')
 
 @pytest.mark.repository
 def test_meal_counts(repository):

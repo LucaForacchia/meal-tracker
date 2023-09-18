@@ -1,7 +1,7 @@
-# 0.0.3:
+# Future!
+
 ## Replacement
 - Expose replacement table
-- Create and expose delete_meal function, updating counter table
 - Carefully test meal_counter, before allowing replacement exposure
 - Implement "DELETE" replacement, restoring counting on meal_counter table
 
@@ -10,7 +10,6 @@
  - ? Acceptance test ?
  - Ensure current implementation with unit test
 
-# Future!
 ## Server
  - Automate start at boot
  - CI/CD?
@@ -18,6 +17,5 @@
 
 ## DB
  - Move to MySql
-
 
 ### Allow frequencies count for date?

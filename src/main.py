@@ -30,5 +30,9 @@ logging.basicConfig(filename=path_logs,
     format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S'
     )
 print("Logs on:", path_logs)
+
+port_conf = os.environ.get("port_run")
+port_run = 5001 if port_conf is None else int(port_conf)
+
 logging.info("Welcome to backend logs :)\nServer configuration: %s" % str(load_config()))
-app.run(debug=False, host="0.0.0.0", port=5001)
+app.run(debug=False, host="0.0.0.0", port=port_run)

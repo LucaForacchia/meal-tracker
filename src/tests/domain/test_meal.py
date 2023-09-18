@@ -24,18 +24,20 @@ def test_meal_creation():
     assert not meal_object.start_week
     assert meal_object.week_number is None
     assert meal_object.meal_id == "TESTMEAL"
-    assert len(meal_object.__dict__) == 9
+    assert meal_object.dessert is None
+    assert len(meal_object.__dict__) == 10
 
 @pytest.mark.domain
 def test_creation_dict():
-    # given: a dict containing valid values for a Meal
+    # given: a dict containing valid values for a Meal, including dessert
     meal = {
             "date": datetime.fromisoformat("2022-02-28"),
             "start_week": bool("True"),
             "meal_type": "Pranzo",
             "participants": "Entrambi",
             "meal": "DictMeal",
-            "notes": "Notes"
+            "notes": "Notes",
+            "dessert": "Test dessert"
         }
 
     # when: using it to create the Meal object
@@ -53,4 +55,5 @@ def test_creation_dict():
     assert meal_object.start_week
     assert meal_object.week_number is None
     assert meal_object.meal_id == "DICTMEAL"
-    assert len(meal_object.__dict__) == 9 
+    assert meal_object.dessert == "Test dessert"
+    assert len(meal_object.__dict__) == 10
