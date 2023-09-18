@@ -1,3 +1,11 @@
+## [0.2.0] - 2023-09-18
+## Added
+- Delete meal functionality
+- Tests extended
+
+## Changed
+- Cleaned update meal counter flow.
+
 ## [0.1.0] - 2022-12-16
 ## Added
 - Dessert handling
